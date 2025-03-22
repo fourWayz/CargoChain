@@ -42,15 +42,6 @@ import {
     timestamp: IDL.Nat64,
   });
   
-  // Define the Payment structure using IDL
-  const Payment = IDL.Record({
-    orderId: IDL.Text,
-    fee: IDL.Nat64,
-    status: IDL.Text,
-    payer: IDL.Principal,
-    paid_at_block: IDL.Opt(IDL.Nat64),
-    memo: IDL.Nat64,
-  });
   
   // Define the Message variant for responses
   const Message = IDL.Variant({
@@ -86,22 +77,8 @@ import {
     latitude: number;
     longitude: number;
   };
-  
-  type Transaction = {
-    id: string;
-    shipmentId: string;
-    location: Location;
-    timestamp: bigint;
-  };
-  
-  type Payment = {
-    orderId: string;
-    fee: bigint;
-    status: string;
-    payer: Principal;
-    paid_at_block: Opt<bigint>;
-    memo: bigint;
-  };
+
+ 
   
   type Message =
     | { Exists: string }
