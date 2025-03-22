@@ -99,7 +99,6 @@ let shipments: Shipment[] = [];
      * Adds a new product.
      * @param {string} name - The name of the product.
      * @param {string} description - The description of the product.
-     * @returns {Result<Message, Message>} - A success or error message.
      */
     @update([IDL.Text, IDL.Text], IDL.Text)
     addProduct(name: string, description: string) : string {
@@ -120,10 +119,9 @@ let shipments: Shipment[] = [];
      * @param {string} productId - The ID of the product to ship.
      * @param {string} from - The origin of the shipment.
      * @param {string} to - The destination of the shipment.
-     * @returns {Result<Message, Message>} - A success or error message.
      */
-    @update([IDL.Text, IDL.Text, IDL.Text], Result(Message, Message))
-    addShipment(productId: string, from: string, to: string): Result<Message, Message> {
+    @update([IDL.Text, IDL.Text, IDL.Text], IDL.Text)
+    addShipment(productId: string, from: string, to: string): string {
       const shipmentId: string = uuidv4();
       const shipment: Shipment = {
         id: shipmentId,
@@ -131,10 +129,10 @@ let shipments: Shipment[] = [];
         from,
         to,
         status: "Pending",
-        timestamp: ic.time(),
+        timestamp: time(),
       };
-      shipments.insert(shipmentId, shipment);
-      return Ok({ Success: `Shipment added with ID ${shipmentId}` });
+      shipments.push(shipment);
+      return  `Shipment added with ID ${shipmentId}`;
     }
   
     /**
@@ -143,16 +141,16 @@ let shipments: Shipment[] = [];
      * @param {string} status - The new status of the shipment.
      * @returns {Result<Message, Message>} - A success or error message.
      */
-    @update([IDL.Text, IDL.Text], Result(Message, Message))
-    updateShipmentStatus(shipmentId: string, status: string): Result<Message, Message> {
-      const shipmentOpt: Opt<Shipment> = shipments.get(shipmentId);
-      if ("None" in shipmentOpt) {
-        return Err({ NotFound: `Shipment with ID ${shipmentId} not found` });
+    @update([IDL.Text, IDL.Text], IDL.Text)
+    updateShipmentStatus(shipmentId: string, status: string): string {
+      const shipment: Shipment | undefined = shipments.find((shipment)=> shipment.id.toString() == shipmentId.toString());
+      if (!shipment) {
+        return `Shipment with ID ${shipmentId} not found`;
       }
-      const shipment: Shipment = shipmentOpt.Some;
+
       shipment.status = status;
-      shipments.insert(shipmentId, shipment);
-      return Ok({ Success: `Shipment status updated for ID ${shipmentId}` });
+      shipments.push(shipment);
+      return `Shipment status updated for ID ${shipmentId}`;
     }
   
     /**
