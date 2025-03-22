@@ -66,7 +66,6 @@ var __decorateElement = (array, flags, name, decorators, target, extra) => {
   }
   return k || __decoratorMetadata(array, target), desc && __defProp(target, name, desc), p ? k ^ 4 ? extra : desc : target;
 };
-var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
 var __privateIn = (member, obj) => Object(obj) !== obj ? __typeError('Cannot use the "in" operator on this value') : member.has(obj);
 var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
@@ -5502,24 +5501,219 @@ function update(param1, param2, param3) {
   return decoratorArgumentsHandler("update", param1, param2, param3);
 }
 
+// node_modules/uuid/dist/esm-browser/stringify.js
+var byteToHex = [];
+for (let i = 0; i < 256; ++i) {
+  byteToHex.push((i + 256).toString(16).slice(1));
+}
+function unsafeStringify(arr, offset = 0) {
+  return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
+}
+
+// node_modules/uuid/dist/esm-browser/rng.js
+var getRandomValues;
+var rnds8 = new Uint8Array(16);
+function rng() {
+  if (!getRandomValues) {
+    if (typeof crypto === "undefined" || !crypto.getRandomValues) {
+      throw new Error("crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported");
+    }
+    getRandomValues = crypto.getRandomValues.bind(crypto);
+  }
+  return getRandomValues(rnds8);
+}
+
+// node_modules/uuid/dist/esm-browser/native.js
+var randomUUID = typeof crypto !== "undefined" && crypto.randomUUID && crypto.randomUUID.bind(crypto);
+var native_default = { randomUUID };
+
+// node_modules/uuid/dist/esm-browser/v4.js
+function v4(options, buf, offset) {
+  if (native_default.randomUUID && !buf && !options) {
+    return native_default.randomUUID();
+  }
+  options = options || {};
+  const rnds = options.random ?? options.rng?.() ?? rng();
+  if (rnds.length < 16) {
+    throw new Error("Random bytes length must be >= 16");
+  }
+  rnds[6] = rnds[6] & 15 | 64;
+  rnds[8] = rnds[8] & 63 | 128;
+  if (buf) {
+    offset = offset || 0;
+    if (offset < 0 || offset + 16 > buf.length) {
+      throw new RangeError(`UUID byte range ${offset}:${offset + 15} is out of buffer bounds`);
+    }
+    for (let i = 0; i < 16; ++i) {
+      buf[offset + i] = rnds[i];
+    }
+    return buf;
+  }
+  return unsafeStringify(rnds);
+}
+var v4_default = v4;
+
+// node_modules/azle/src/stable/lib/ic_apis/msg_caller.ts
+function msgCaller() {
+  if (globalThis._azleIcExperimental !== void 0) {
+    return Principal.fromUint8Array(
+      new Uint8Array(globalThis._azleIcExperimental.msgCaller())
+    );
+  }
+  if (globalThis._azleIcStable !== void 0) {
+    return Principal.fromUint8Array(globalThis._azleIcStable.msgCaller());
+  }
+  return Principal.fromHex("04");
+}
+
+// node_modules/azle/src/stable/lib/ic_apis/time.ts
+function time() {
+  if (globalThis._azleIcExperimental !== void 0) {
+    return BigInt(globalThis._azleIcExperimental.time());
+  }
+  if (globalThis._azleIcStable !== void 0) {
+    return globalThis._azleIcStable.time();
+  }
+  return 0n;
+}
+
 // src/index.ts
-var _setMessage_dec, _getMessage_dec, _init;
-_getMessage_dec = [query([], idl_exports.Text)], _setMessage_dec = [update([idl_exports.Text])];
+var Product = idl_exports.Record({
+  id: idl_exports.Text,
+  name: idl_exports.Text,
+  description: idl_exports.Text,
+  manufacturer: idl_exports.Text,
+  timestamp: idl_exports.Nat64
+});
+var Shipment = idl_exports.Record({
+  id: idl_exports.Text,
+  productId: idl_exports.Text,
+  from: idl_exports.Text,
+  to: idl_exports.Text,
+  status: idl_exports.Text,
+  timestamp: idl_exports.Nat64
+});
+var Location = idl_exports.Record({
+  name: idl_exports.Text,
+  latitude: idl_exports.Int32,
+  longitude: idl_exports.Int32
+});
+var Transaction = idl_exports.Record({
+  id: idl_exports.Text,
+  shipmentId: idl_exports.Text,
+  location: Location,
+  timestamp: idl_exports.Nat64
+});
+var Message = idl_exports.Variant({
+  Exists: idl_exports.Text,
+  NotFound: idl_exports.Text,
+  InvalidPayload: idl_exports.Text,
+  PaymentFailed: idl_exports.Text,
+  PaymentCompleted: idl_exports.Text,
+  Success: idl_exports.Text,
+  Fail: idl_exports.Text
+});
+var products = [];
+var shipments = [];
+var _cancelShipment_dec, _updateProduct_dec, _getShipmentCount_dec, _getProductCount_dec, _getShipments_dec, _getShipmentDetails_dec, _getProducts_dec, _getProductDetails_dec, _updateShipmentStatus_dec, _addShipment_dec, _addProduct_dec, _init;
+_addProduct_dec = [update([idl_exports.Text, idl_exports.Text], idl_exports.Text)], _addShipment_dec = [update([idl_exports.Text, idl_exports.Text, idl_exports.Text], idl_exports.Text)], _updateShipmentStatus_dec = [update([idl_exports.Text, idl_exports.Text], idl_exports.Text)], _getProductDetails_dec = [query([idl_exports.Text], idl_exports.Opt(Product))], _getProducts_dec = [query([], idl_exports.Vec(Product))], _getShipmentDetails_dec = [query([idl_exports.Text], idl_exports.Opt(Shipment))], _getShipments_dec = [query([], idl_exports.Vec(Shipment))], _getProductCount_dec = [query([], idl_exports.Int32)], _getShipmentCount_dec = [query([], idl_exports.Int32)], _updateProduct_dec = [update([idl_exports.Text, idl_exports.Text, idl_exports.Text], idl_exports.Text)], _cancelShipment_dec = [update([idl_exports.Text], idl_exports.Text)];
 var src_default = class {
   constructor() {
     __runInitializers(_init, 5, this);
-    __publicField(this, "message", "Hello world!");
   }
-  getMessage() {
-    return this.message;
+  addProduct(name, description) {
+    const productId = v4_default();
+    const product = {
+      id: productId,
+      name,
+      description,
+      manufacturer: msgCaller().toText(),
+      timestamp: time()
+    };
+    products.push(product);
+    return `Product added with ID ${productId}`;
   }
-  setMessage(message) {
-    this.message = message;
+  addShipment(productId, from, to) {
+    const shipmentId = v4_default();
+    const shipment = {
+      id: shipmentId,
+      productId,
+      from,
+      to,
+      status: "Pending",
+      timestamp: time()
+    };
+    shipments.push(shipment);
+    return `Shipment added with ID ${shipmentId}`;
+  }
+  updateShipmentStatus(shipmentId, status) {
+    const shipment = shipments.find((shipment2) => shipment2.id.toString() == shipmentId.toString());
+    if (!shipment) {
+      return `Shipment with ID ${shipmentId} not found`;
+    }
+    shipment.status = status;
+    return `Shipment status updated for ID ${shipmentId}`;
+  }
+  getProductDetails(productId) {
+    const product = products.find((product2) => product2.id.toString() == productId.toString());
+    if (!product) {
+      return `Product with ID ${productId} not found`;
+    }
+    return [product];
+  }
+  getProducts() {
+    return products;
+  }
+  getShipmentDetails(shipmentId) {
+    const shipment = shipments.find((shipment2) => shipment2.id.toString() == shipmentId.toString());
+    if (!shipment) {
+      return `Shipment with ID ${shipmentId} not found`;
+    }
+    return [shipment];
+  }
+  getShipments() {
+    return shipments;
+  }
+  getProductCount() {
+    return Number(products.length.toString());
+  }
+  getShipmentCount() {
+    return Number(shipments.length.toString());
+  }
+  updateProduct(id, name, description) {
+    const product = products.find((product2) => product2.id.toString() == id.toString());
+    if (!product) {
+      return `Product with ID ${id} not found`;
+    }
+    product.name = name;
+    product.description = description;
+    return `Product details updated for ID ${id}`;
+  }
+  cancelShipment(id) {
+    const shipment = shipments.find((shipment2) => shipment2.id.toString() == id.toString());
+    if (!shipment) {
+      return `Shipment with ID ${id} not found`;
+    }
+    if (shipment.status === "Pending" || shipment.status === "In Transit") {
+      shipments = shipments.filter((shipment2) => shipment2.id.toString() !== id.toString());
+      return `Shipment with ID ${id} cancelled successfully`;
+    } else {
+      return `Shipment with ID ${id} cannot be cancelled`;
+    }
   }
 };
 _init = __decoratorStart(null);
-__decorateElement(_init, 1, "getMessage", _getMessage_dec, src_default);
-__decorateElement(_init, 1, "setMessage", _setMessage_dec, src_default);
+__decorateElement(_init, 1, "addProduct", _addProduct_dec, src_default);
+__decorateElement(_init, 1, "addShipment", _addShipment_dec, src_default);
+__decorateElement(_init, 1, "updateShipmentStatus", _updateShipmentStatus_dec, src_default);
+__decorateElement(_init, 1, "getProductDetails", _getProductDetails_dec, src_default);
+__decorateElement(_init, 1, "getProducts", _getProducts_dec, src_default);
+__decorateElement(_init, 1, "getShipmentDetails", _getShipmentDetails_dec, src_default);
+__decorateElement(_init, 1, "getShipments", _getShipments_dec, src_default);
+__decorateElement(_init, 1, "getProductCount", _getProductCount_dec, src_default);
+__decorateElement(_init, 1, "getShipmentCount", _getShipmentCount_dec, src_default);
+__decorateElement(_init, 1, "updateProduct", _updateProduct_dec, src_default);
+__decorateElement(_init, 1, "cancelShipment", _cancelShipment_dec, src_default);
 __decoratorMetadata(_init, src_default);
 
 // <stdin>

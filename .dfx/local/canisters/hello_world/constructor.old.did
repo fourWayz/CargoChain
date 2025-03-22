@@ -3,15 +3,7 @@ service : {
   addShipment : (text, text, text) -> (text);
   cancelShipment : (text) -> (text);
   getProductCount : () -> (int32) query;
-  getProductDetails : (text) -> (
-      opt record {
-        id : text;
-        manufacturer : text;
-        name : text;
-        description : text;
-        timestamp : nat64;
-      },
-    ) query;
+  getProductDetails : (text) -> (text) query;
   getProducts : () -> (
       vec record {
         id : text;

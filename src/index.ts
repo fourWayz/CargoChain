@@ -148,7 +148,6 @@ export default class {
     }
 
     shipment.status = status;
-    shipments.push(shipment);
     return `Shipment status updated for ID ${shipmentId}`;
   }
 
@@ -156,13 +155,13 @@ export default class {
    * Retrieves details of a product by its ID.
    * @param {string} productId - The ID of the product.
    */
-  @query([IDL.Text], IDL.Text)
-  getProductDetails(productId: string): string | Product {
+  @query([IDL.Text], IDL.Opt(Product))
+  getProductDetails(productId: string): string | [Product] {
     const product: Product | undefined = products.find((product) => product.id.toString() == productId.toString());
     if (!product) {
       return `Product with ID ${productId} not found`;
     }
-    return product
+    return [product]
   }
 
   /**
@@ -179,12 +178,12 @@ export default class {
    * @param {string} shipmentId - The ID of the shipment.
    */
   @query([IDL.Text], IDL.Opt(Shipment))
-  getShipmentDetails(shipmentId: string): Shipment | string {
+  getShipmentDetails(shipmentId: string): [Shipment] | string {
     const shipment: Shipment | undefined = shipments.find((shipment)=> shipment.id.toString() == shipmentId.toString());
     if (!shipment) {
       return `Shipment with ID ${shipmentId} not found`;
     }
-    return shipment
+    return [shipment]
   }
 
   /**
@@ -230,7 +229,6 @@ export default class {
     }
     product.name = name;
     product.description = description;
-    products.push(product);
     return `Product details updated for ID ${id}`;
   }
 
