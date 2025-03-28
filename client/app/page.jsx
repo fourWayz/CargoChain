@@ -180,7 +180,7 @@ export default function Home() {
       title: 'Update Shipment Status',
       input: 'select',
       inputOptions: {
-        'CREATED': 'Created',
+        'Pending': 'Pending',
         'IN_TRANSIT': 'In Transit',
         'DELIVERED': 'Delivered',
         'CANCELLED': 'Cancelled'
@@ -238,7 +238,7 @@ export default function Home() {
         } else if ('Unauthorized' in result) {
           Swal.fire('Unauthorized', result.Unauthorized, 'warning');
         } else {
-          Swal.fire('Error', 'Unknown response from canister', 'error');
+          Swal.fire('Cancelled!', response, 'success');
         }
 
         await fetchData();
@@ -358,32 +358,60 @@ export default function Home() {
                       <Alert variant="info">No products found</Alert>
                     ) : (
                       <Row xs={1} md={2} lg={3} className="g-4">
-                        {products.map((product) => (
-                          <Col key={product.id}>
-                            <Card>
-                              <Card.Body>
-                                <Card.Title>{product.name}</Card.Title>
-                                <Card.Subtitle className="mb-2 text-muted">
-                                  {product.manufacturer}
-                                </Card.Subtitle>
-                                <Card.Text>{product.description}</Card.Text>
+                      {products.map((product) => (
+                        <Col key={product.id}>
+                          <Card className="h-100">
+                            <Card.Body className="d-flex flex-column">
+                              <div className="d-flex justify-content-between align-items-start mb-2">
+                                <Card.Title className="mb-0">
+                                  <i className="bi bi-box-seam me-2 text-primary"></i>
+                                 Name : {product.name}
+                                </Card.Title>
+                                <Badge bg="secondary" className="ms-2">
+                                  ID: {product.id.substring(0, 6)}...
+                                </Badge>
+                              </div>
+                              
+                              <Card.Subtitle className="mb-2 text-muted small">
+                                <i className="bi bi-person-fill me-1"></i>
+                                Owner: {product.manufacturer.substring(0, 8)}...{product.manufacturer.substring(product.manufacturer.length - 4)}
+                              </Card.Subtitle>
+                              
+                              <Card.Text className="flex-grow-1">
+                                <i className="bi bi-card-text me-1 text-muted"></i>
+                               Description : {product.description}
+                              </Card.Text>
+                              
+                              <div className="mt-auto">
                                 <Button
-                                  variant="primary"
+                                  variant="outline-primary"
                                   size="sm"
                                   onClick={() => handleUpdateProduct(product.id)}
+                                  className="me-2"
                                 >
+                                  <i className="bi bi-pencil-square me-1"></i>
                                   Update
                                 </Button>
-                              </Card.Body>
-                              <Card.Footer>
-                                <small className="text-muted">
-                                  Created: {new Date(Number(product.timestamp) / 1000000).toLocaleString()}
-                                </small>
-                              </Card.Footer>
-                            </Card>
-                          </Col>
-                        ))}
-                      </Row>
+                                <Button
+                                  variant="outline-secondary"
+                                  size="sm"
+                                  onClick={() => navigator.clipboard.writeText(product.id)}
+                                >
+                                  <i className="bi bi-clipboard me-1"></i>
+                                  Copy ID
+                                </Button>
+                              </div>
+                            </Card.Body>
+                            <Card.Footer className="bg-transparent border-top-0">
+                              <small className="text-muted">
+                                <i className="bi bi-clock-history me-1"></i>
+                                Created: {new Date(Number(product.timestamp) / 1000000).toLocaleString()}
+                              </small>
+                            </Card.Footer>
+                          </Card>
+                        </Col>
+                      ))}
+                    </Row>
                     )}
                   </Tab.Pane>
                   <Tab.Pane eventKey="shipments">
@@ -423,7 +451,7 @@ export default function Home() {
                                 <td>
                                   <span className={`badge bg-${shipment.status === 'DELIVERED' ? 'success' :
                                     shipment.status === 'CANCELLED' ? 'danger' :
-                                      shipment.status === 'IN_TRANSIT' ? 'warning' : 'info'
+                                      shipment.status === 'In Transit' ? 'warning' : 'info'
                                     }`}>
                                     {shipment.status}
                                   </span>

@@ -6,7 +6,7 @@ import {
   Principal,
   time
 } from "azle";
-import { v4 as uuidv4 } from "uuid";
+import { v4 } from "uuid";
 
 // Define the Product structure using IDL
 const Product = IDL.Record({
@@ -84,7 +84,7 @@ export default class {
    */
   @update([IDL.Text, IDL.Text], Message)
   addProduct(name: string, description: string): Message {
-    const productId: string = uuidv4();
+    const productId: string = v4();
     const owner = msgCaller().toText();
     
     const product: Product = {
@@ -109,7 +109,7 @@ export default class {
   @update([IDL.Text, IDL.Text, IDL.Text], Message)
   addShipment(productId: string, from: string, to: string): Message {
     const owner = msgCaller().toText();
-    const product = products.find(p => p.id === productId);
+    const product = products.find(p => p.id.toString() === productId.toString());
     
     if (!product) {
       return { NotFound: `Product with ID ${productId} not found` };
@@ -119,7 +119,7 @@ export default class {
       return { Unauthorized: "You don't own this product" };
     }
     
-    const shipmentId: string = uuidv4();
+    const shipmentId: string = v4();
     const shipment: Shipment = {
       id: shipmentId,
       productId,
@@ -142,7 +142,7 @@ export default class {
   @update([IDL.Text, IDL.Text], Message)
   updateShipmentStatus(shipmentId: string, status: string): Message {
     const owner = msgCaller().toText();
-    const shipment = shipments.find(s => s.id === shipmentId);
+    const shipment = shipments.find(s => s.id.toString() === shipmentId.toString());
     
     if (!shipment) {
       return { NotFound: `Shipment with ID ${shipmentId} not found` };
@@ -163,7 +163,7 @@ export default class {
   @query([IDL.Text], IDL.Opt(Product))
   getProductDetails(productId: string): [Product] | string {
     const owner = msgCaller().toText();
-    const product = products.find(p => p.id === productId);
+    const product = products.find(p => p.id.toString() === productId.toString());
     
     if (!product) {
       return `Product with ID ${productId} not found`;
@@ -193,7 +193,7 @@ export default class {
   @query([IDL.Text], IDL.Opt(Shipment))
   getShipmentDetails(shipmentId: string): [Shipment] | string {
     const owner = msgCaller().toText();
-    const shipment = shipments.find(s => s.id === shipmentId);
+    const shipment = shipments.find(s => s.id.toString() === shipmentId.toString());
     
     if (!shipment) {
       return `Shipment with ID ${shipmentId} not found`;
@@ -245,7 +245,7 @@ export default class {
   @update([IDL.Text, IDL.Text, IDL.Text], Message)
   updateProduct(id: string, name: string, description: string): Message {
     const owner = msgCaller().toText();
-    const product = products.find(p => p.id === id);
+    const product = products.find(p => p.id.toString() === id.toString());
     
     if (!product) {
       return { NotFound: `Product with ID ${id} not found` };
@@ -267,7 +267,7 @@ export default class {
   @update([IDL.Text], Message)
   cancelShipment(id: string): Message {
     const owner = msgCaller().toText();
-    const shipment = shipments.find(s => s.id === id);
+    const shipment = shipments.find(s => s.id.toString() === id.toString());
     
     if (!shipment) {
       return { NotFound: `Shipment with ID ${id} not found` };

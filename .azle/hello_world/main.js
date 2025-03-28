@@ -5631,7 +5631,7 @@ var src_default = class {
   }
   addShipment(productId, from, to) {
     const owner = msgCaller().toText();
-    const product = products.find((p) => p.id === productId);
+    const product = products.find((p) => p.id.toString() === productId.toString());
     if (!product) {
       return { NotFound: `Product with ID ${productId} not found` };
     }
@@ -5653,7 +5653,7 @@ var src_default = class {
   }
   updateShipmentStatus(shipmentId, status) {
     const owner = msgCaller().toText();
-    const shipment = shipments.find((s) => s.id === shipmentId);
+    const shipment = shipments.find((s) => s.id.toString() === shipmentId.toString());
     if (!shipment) {
       return { NotFound: `Shipment with ID ${shipmentId} not found` };
     }
@@ -5665,7 +5665,7 @@ var src_default = class {
   }
   getProductDetails(productId) {
     const owner = msgCaller().toText();
-    const product = products.find((p) => p.id === productId);
+    const product = products.find((p) => p.id.toString() === productId.toString());
     if (!product) {
       return `Product with ID ${productId} not found`;
     }
@@ -5680,7 +5680,7 @@ var src_default = class {
   }
   getShipmentDetails(shipmentId) {
     const owner = msgCaller().toText();
-    const shipment = shipments.find((s) => s.id === shipmentId);
+    const shipment = shipments.find((s) => s.id.toString() === shipmentId.toString());
     if (!shipment) {
       return `Shipment with ID ${shipmentId} not found`;
     }
@@ -5703,7 +5703,7 @@ var src_default = class {
   }
   updateProduct(id, name, description) {
     const owner = msgCaller().toText();
-    const product = products.find((p) => p.id === id);
+    const product = products.find((p) => p.id.toString() === id.toString());
     if (!product) {
       return { NotFound: `Product with ID ${id} not found` };
     }
@@ -5716,7 +5716,7 @@ var src_default = class {
   }
   cancelShipment(id) {
     const owner = msgCaller().toText();
-    const shipment = shipments.find((s) => s.id === id);
+    const shipment = shipments.find((s) => s.id.toString() === id.toString());
     if (!shipment) {
       return { NotFound: `Shipment with ID ${id} not found` };
     }
