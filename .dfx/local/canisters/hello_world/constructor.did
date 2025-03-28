@@ -1,12 +1,46 @@
 service : () -> {
-  addProduct : (text, text) -> (text);
-  addShipment : (text, text, text) -> (text);
-  cancelShipment : (text) -> (text);
+  addProduct : (text, text) -> (
+      variant {
+        Fail : text;
+        PaymentFailed : text;
+        InvalidPayload : text;
+        NotFound : text;
+        Success : text;
+        Unauthorized : text;
+        PaymentCompleted : text;
+        Exists : text;
+      },
+    );
+  addShipment : (text, text, text) -> (
+      variant {
+        Fail : text;
+        PaymentFailed : text;
+        InvalidPayload : text;
+        NotFound : text;
+        Success : text;
+        Unauthorized : text;
+        PaymentCompleted : text;
+        Exists : text;
+      },
+    );
+  cancelShipment : (text) -> (
+      variant {
+        Fail : text;
+        PaymentFailed : text;
+        InvalidPayload : text;
+        NotFound : text;
+        Success : text;
+        Unauthorized : text;
+        PaymentCompleted : text;
+        Exists : text;
+      },
+    );
   getProductCount : () -> (int32) query;
   getProductDetails : (text) -> (
       opt record {
         id : text;
         manufacturer : text;
+        owner : text;
         name : text;
         description : text;
         timestamp : nat64;
@@ -16,6 +50,7 @@ service : () -> {
       vec record {
         id : text;
         manufacturer : text;
+        owner : text;
         name : text;
         description : text;
         timestamp : nat64;
@@ -27,6 +62,7 @@ service : () -> {
         id : text;
         to : text;
         status : text;
+        owner : text;
         from : text;
         productId : text;
         timestamp : nat64;
@@ -37,11 +73,34 @@ service : () -> {
         id : text;
         to : text;
         status : text;
+        owner : text;
         from : text;
         productId : text;
         timestamp : nat64;
       },
     ) query;
-  updateProduct : (text, text, text) -> (text);
-  updateShipmentStatus : (text, text) -> (text);
+  updateProduct : (text, text, text) -> (
+      variant {
+        Fail : text;
+        PaymentFailed : text;
+        InvalidPayload : text;
+        NotFound : text;
+        Success : text;
+        Unauthorized : text;
+        PaymentCompleted : text;
+        Exists : text;
+      },
+    );
+  updateShipmentStatus : (text, text) -> (
+      variant {
+        Fail : text;
+        PaymentFailed : text;
+        InvalidPayload : text;
+        NotFound : text;
+        Success : text;
+        Unauthorized : text;
+        PaymentCompleted : text;
+        Exists : text;
+      },
+    );
 }

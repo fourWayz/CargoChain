@@ -3,9 +3,39 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export interface _SERVICE {
-  'addProduct' : ActorMethod<[string, string], string>,
-  'addShipment' : ActorMethod<[string, string, string], string>,
-  'cancelShipment' : ActorMethod<[string], string>,
+  'addProduct' : ActorMethod<
+    [string, string],
+    { 'Fail' : string } |
+      { 'PaymentFailed' : string } |
+      { 'InvalidPayload' : string } |
+      { 'NotFound' : string } |
+      { 'Success' : string } |
+      { 'Unauthorized' : string } |
+      { 'PaymentCompleted' : string } |
+      { 'Exists' : string }
+  >,
+  'addShipment' : ActorMethod<
+    [string, string, string],
+    { 'Fail' : string } |
+      { 'PaymentFailed' : string } |
+      { 'InvalidPayload' : string } |
+      { 'NotFound' : string } |
+      { 'Success' : string } |
+      { 'Unauthorized' : string } |
+      { 'PaymentCompleted' : string } |
+      { 'Exists' : string }
+  >,
+  'cancelShipment' : ActorMethod<
+    [string],
+    { 'Fail' : string } |
+      { 'PaymentFailed' : string } |
+      { 'InvalidPayload' : string } |
+      { 'NotFound' : string } |
+      { 'Success' : string } |
+      { 'Unauthorized' : string } |
+      { 'PaymentCompleted' : string } |
+      { 'Exists' : string }
+  >,
   'getProductCount' : ActorMethod<[], number>,
   'getProductDetails' : ActorMethod<
     [string],
@@ -13,6 +43,7 @@ export interface _SERVICE {
       {
         'id' : string,
         'manufacturer' : string,
+        'owner' : string,
         'name' : string,
         'description' : string,
         'timestamp' : bigint,
@@ -25,6 +56,7 @@ export interface _SERVICE {
       {
         'id' : string,
         'manufacturer' : string,
+        'owner' : string,
         'name' : string,
         'description' : string,
         'timestamp' : bigint,
@@ -39,6 +71,7 @@ export interface _SERVICE {
         'id' : string,
         'to' : string,
         'status' : string,
+        'owner' : string,
         'from' : string,
         'productId' : string,
         'timestamp' : bigint,
@@ -52,14 +85,35 @@ export interface _SERVICE {
         'id' : string,
         'to' : string,
         'status' : string,
+        'owner' : string,
         'from' : string,
         'productId' : string,
         'timestamp' : bigint,
       }
     >
   >,
-  'updateProduct' : ActorMethod<[string, string, string], string>,
-  'updateShipmentStatus' : ActorMethod<[string, string], string>,
+  'updateProduct' : ActorMethod<
+    [string, string, string],
+    { 'Fail' : string } |
+      { 'PaymentFailed' : string } |
+      { 'InvalidPayload' : string } |
+      { 'NotFound' : string } |
+      { 'Success' : string } |
+      { 'Unauthorized' : string } |
+      { 'PaymentCompleted' : string } |
+      { 'Exists' : string }
+  >,
+  'updateShipmentStatus' : ActorMethod<
+    [string, string],
+    { 'Fail' : string } |
+      { 'PaymentFailed' : string } |
+      { 'InvalidPayload' : string } |
+      { 'NotFound' : string } |
+      { 'Success' : string } |
+      { 'Unauthorized' : string } |
+      { 'PaymentCompleted' : string } |
+      { 'Exists' : string }
+  >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

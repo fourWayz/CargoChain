@@ -5583,6 +5583,8 @@ var Product = idl_exports.Record({
   name: idl_exports.Text,
   description: idl_exports.Text,
   manufacturer: idl_exports.Text,
+  owner: idl_exports.Text,
+  // Added owner field
   timestamp: idl_exports.Nat64
 });
 var Shipment = idl_exports.Record({
@@ -5591,17 +5593,8 @@ var Shipment = idl_exports.Record({
   from: idl_exports.Text,
   to: idl_exports.Text,
   status: idl_exports.Text,
-  timestamp: idl_exports.Nat64
-});
-var Location = idl_exports.Record({
-  name: idl_exports.Text,
-  latitude: idl_exports.Int32,
-  longitude: idl_exports.Int32
-});
-var Transaction = idl_exports.Record({
-  id: idl_exports.Text,
-  shipmentId: idl_exports.Text,
-  location: Location,
+  owner: idl_exports.Text,
+  // Added owner field
   timestamp: idl_exports.Nat64
 });
 var Message = idl_exports.Variant({
@@ -5611,29 +5604,40 @@ var Message = idl_exports.Variant({
   PaymentFailed: idl_exports.Text,
   PaymentCompleted: idl_exports.Text,
   Success: idl_exports.Text,
-  Fail: idl_exports.Text
+  Fail: idl_exports.Text,
+  Unauthorized: idl_exports.Text
 });
 var products = [];
 var shipments = [];
 var _cancelShipment_dec, _updateProduct_dec, _getShipmentCount_dec, _getProductCount_dec, _getShipments_dec, _getShipmentDetails_dec, _getProducts_dec, _getProductDetails_dec, _updateShipmentStatus_dec, _addShipment_dec, _addProduct_dec, _init;
-_addProduct_dec = [update([idl_exports.Text, idl_exports.Text], idl_exports.Text)], _addShipment_dec = [update([idl_exports.Text, idl_exports.Text, idl_exports.Text], idl_exports.Text)], _updateShipmentStatus_dec = [update([idl_exports.Text, idl_exports.Text], idl_exports.Text)], _getProductDetails_dec = [query([idl_exports.Text], idl_exports.Opt(Product))], _getProducts_dec = [query([], idl_exports.Vec(Product))], _getShipmentDetails_dec = [query([idl_exports.Text], idl_exports.Opt(Shipment))], _getShipments_dec = [query([], idl_exports.Vec(Shipment))], _getProductCount_dec = [query([], idl_exports.Int32)], _getShipmentCount_dec = [query([], idl_exports.Int32)], _updateProduct_dec = [update([idl_exports.Text, idl_exports.Text, idl_exports.Text], idl_exports.Text)], _cancelShipment_dec = [update([idl_exports.Text], idl_exports.Text)];
+_addProduct_dec = [update([idl_exports.Text, idl_exports.Text], Message)], _addShipment_dec = [update([idl_exports.Text, idl_exports.Text, idl_exports.Text], Message)], _updateShipmentStatus_dec = [update([idl_exports.Text, idl_exports.Text], Message)], _getProductDetails_dec = [query([idl_exports.Text], idl_exports.Opt(Product))], _getProducts_dec = [query([], idl_exports.Vec(Product))], _getShipmentDetails_dec = [query([idl_exports.Text], idl_exports.Opt(Shipment))], _getShipments_dec = [query([], idl_exports.Vec(Shipment))], _getProductCount_dec = [query([], idl_exports.Int32)], _getShipmentCount_dec = [query([], idl_exports.Int32)], _updateProduct_dec = [update([idl_exports.Text, idl_exports.Text, idl_exports.Text], Message)], _cancelShipment_dec = [update([idl_exports.Text], Message)];
 var src_default = class {
   constructor() {
     __runInitializers(_init, 5, this);
   }
   addProduct(name, description) {
     const productId = v4_default();
+    const owner = msgCaller().toText();
     const product = {
       id: productId,
       name,
       description,
-      manufacturer: msgCaller().toText(),
+      manufacturer: owner,
+      owner,
       timestamp: time()
     };
     products.push(product);
-    return `Product added with ID ${productId}`;
+    return { Success: `Product added with ID ${productId}` };
   }
   addShipment(productId, from, to) {
+    const owner = msgCaller().toText();
+    const product = products.find((p) => p.id === productId);
+    if (!product) {
+      return { NotFound: `Product with ID ${productId} not found` };
+    }
+    if (product.owner !== owner) {
+      return { Unauthorized: "You don't own this product" };
+    }
     const shipmentId = v4_default();
     const shipment = {
       id: shipmentId,
@@ -5641,64 +5645,89 @@ var src_default = class {
       from,
       to,
       status: "Pending",
+      owner,
       timestamp: time()
     };
     shipments.push(shipment);
-    return `Shipment added with ID ${shipmentId}`;
+    return { Success: `Shipment added with ID ${shipmentId}` };
   }
   updateShipmentStatus(shipmentId, status) {
-    const shipment = shipments.find((shipment2) => shipment2.id.toString() == shipmentId.toString());
+    const owner = msgCaller().toText();
+    const shipment = shipments.find((s) => s.id === shipmentId);
     if (!shipment) {
-      return `Shipment with ID ${shipmentId} not found`;
+      return { NotFound: `Shipment with ID ${shipmentId} not found` };
+    }
+    if (shipment.owner !== owner) {
+      return { Unauthorized: "You don't own this shipment" };
     }
     shipment.status = status;
-    return `Shipment status updated for ID ${shipmentId}`;
+    return { Success: `Shipment status updated for ID ${shipmentId}` };
   }
   getProductDetails(productId) {
-    const product = products.find((product2) => product2.id.toString() == productId.toString());
+    const owner = msgCaller().toText();
+    const product = products.find((p) => p.id === productId);
     if (!product) {
       return `Product with ID ${productId} not found`;
+    }
+    if (product.owner !== owner) {
+      return `Unauthorized access to product ${productId}`;
     }
     return [product];
   }
   getProducts() {
-    return products;
+    const owner = msgCaller().toText();
+    return products.filter((p) => p.owner === owner);
   }
   getShipmentDetails(shipmentId) {
-    const shipment = shipments.find((shipment2) => shipment2.id.toString() == shipmentId.toString());
+    const owner = msgCaller().toText();
+    const shipment = shipments.find((s) => s.id === shipmentId);
     if (!shipment) {
       return `Shipment with ID ${shipmentId} not found`;
+    }
+    if (shipment.owner !== owner) {
+      return `Unauthorized access to shipment ${shipmentId}`;
     }
     return [shipment];
   }
   getShipments() {
-    return shipments;
+    const owner = msgCaller().toText();
+    return shipments.filter((s) => s.owner === owner);
   }
   getProductCount() {
-    return Number(products.length.toString());
+    const owner = msgCaller().toText();
+    return products.filter((p) => p.owner === owner).length;
   }
   getShipmentCount() {
-    return Number(shipments.length.toString());
+    const owner = msgCaller().toText();
+    return shipments.filter((s) => s.owner === owner).length;
   }
   updateProduct(id, name, description) {
-    const product = products.find((product2) => product2.id.toString() == id.toString());
+    const owner = msgCaller().toText();
+    const product = products.find((p) => p.id === id);
     if (!product) {
-      return `Product with ID ${id} not found`;
+      return { NotFound: `Product with ID ${id} not found` };
+    }
+    if (product.owner !== owner) {
+      return { Unauthorized: "You don't own this product" };
     }
     product.name = name;
     product.description = description;
-    return `Product details updated for ID ${id}`;
+    return { Success: `Product details updated for ID ${id}` };
   }
   cancelShipment(id) {
-    const shipment = shipments.find((shipment2) => shipment2.id.toString() == id.toString());
+    const owner = msgCaller().toText();
+    const shipment = shipments.find((s) => s.id === id);
     if (!shipment) {
-      return `Shipment with ID ${id} not found`;
+      return { NotFound: `Shipment with ID ${id} not found` };
+    }
+    if (shipment.owner !== owner) {
+      return { Unauthorized: "You don't own this shipment" };
     }
     if (shipment.status === "Pending" || shipment.status === "In Transit") {
-      shipments = shipments.filter((shipment2) => shipment2.id.toString() !== id.toString());
-      return `Shipment with ID ${id} cancelled successfully`;
+      shipments = shipments.filter((s) => s.id !== id);
+      return { Success: `Shipment with ID ${id} cancelled successfully` };
     } else {
-      return `Shipment with ID ${id} cannot be cancelled`;
+      return { Fail: `Shipment with ID ${id} cannot be cancelled` };
     }
   }
 };
