@@ -1,81 +1,126 @@
-# Azle Hello World
+# Cargochain - Supply Chain Management on the Internet Computer
 
-- [Installation](#installation)
-- [Deployment](#deployment)
+*Decentralized supply chain management powered by the Internet Computer Protocol*
 
-Azle helps you to build secure decentralized/replicated servers in TypeScript or JavaScript on [ICP](https://internetcomputer.org/). The current replication factor is [13-40 times](https://dashboard.internetcomputer.org/subnets).
+## Overview
 
-Azle stable mode is continuously subjected to [intense scrutiny and testing](https://github.com/demergent-labs/azle/actions), however it does not yet have multiple independent security reviews/audits.
+Cargochain is a decentralized supply chain management system built on the Internet Computer Protocol (ICP). It enables manufacturers, shippers, and recipients to track products and shipments through a transparent, tamper-proof ledger with fine-grained access control.
 
-## Stable Mode
+Key Benefits:
+- **True Ownership**: Users only see and manage products/shipments they created
+- **Transparent Tracking**: Immutable record of all supply chain events
+- **Decentralized**: No single point of failure or control
+- **Identity Integration**: Internet Identity for secure authentication
 
-Azle runs in stable mode by default.
+## Features
 
-This mode is intended for production use after Azle's 1.0 release. Its focus is on API and runtime stability, security, performance, TypeScript and JavaScript language support, the ICP APIs, and Candid remote procedure calls (RPC). There is minimal support for the Node.js standard library, npm ecosystem, and HTTP server functionality.
+### Core Functionality
+- **Product Management**
+  - Add new products with details
+  - Update product information
+  - View product history
+- **Shipment Tracking**
+  - Create shipments between locations
+  - Update shipment status (Pending → In Transit → Delivered)
+  - Cancel shipments when needed
+- **Ownership Control**
+  - Strict access rules - only owners can manage their assets
+  - Principal-based authentication
+
+### Technical Highlights
+- Internet Computer canister smart contracts
+- Internet Identity for decentralized authentication
+- Tamper-proof record of all transactions
+- Responsive web interface with Bootstrap 5
+- Real-time status updates
+
+## Technical Architecture
+
+### Backend (Canister)
+```mermaid
+graph TD
+    A[Main Canister] --> B[Products Storage]
+    A --> C[Shipments Storage]
+    A --> D[Internet Identity]
+    B --> E[(StableBTreeMap)]
+    C --> F[(StableBTreeMap)]
+```
+
+### Frontend
+```mermaid
+graph TD
+    UI[Next.js UI] --> IC[Internet Computer]
+    UI --> II[Internet Identity]
+    UI --> BS[Bootstrap 5]
+    UI --> SWEET[SweetAlert2]
+```
 
 ## Installation
 
-> Windows is only supported through a Linux virtual environment of some kind, such as [WSL](https://learn.microsoft.com/en-us/windows/wsl/install)
+### Prerequisites
+- Node.js (v20+)
+- DFX SDK (v0.15+)
 
-You will need [Node.js 22](#nodejs-22) and [dfx](#dfx) to develop ICP applications with Azle:
+### Setup Steps
 
-### Node.js 22
-
-It's recommended to use nvm to install Node.js 22:
-
+1. **Clone the repository**
 ```bash
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+git clone https://github.com/fourWayz/CargoChain.git
+cd cargochain
 ```
 
-Restart your terminal and then run:
-
+2. **Install dependencies**
 ```bash
-nvm install 22
-```
+npm install
 
-Check that the installation went smoothly by looking for clean output from the following command:
+cd client
 
-```bash
-node --version
-```
-
-### dfx
-
-Install the dfx command line tools for managing ICP applications:
-
-```bash
-DFX_VERSION=0.24.3 sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
-```
-
-Check that the installation went smoothly by looking for clean output from the following command:
-
-```bash
-dfx --version
-```
-
-## Deployment
-
-To create and deploy a simple sample application called `hello_world`:
-
-```bash
-# create a new default project called hello_world
-npx azle new hello_world
-cd hello_world
-```
-
-```bash
-# install all npm dependencies including azle
 npm install
 ```
 
+3. **Start local replica**
 ```bash
-# start up a local ICP replica
-dfx start --clean
+dfx start --background
 ```
 
-In a separate terminal in the `hello_world` directory:
-
+4. **Deploy canisters**
 ```bash
-# deploy your canister
 dfx deploy
 ```
+
+5. **Run frontend**
+```bash
+cd client && npm run dev
+```
+
+## Usage
+
+### Accessing the Application
+1. Navigate to `http://localhost:3000`
+2. Click "Login with Internet Identity"
+3. Create or select your Internet Identity
+
+### Managing Products
+1. **Add Product**: Click "Add Product" button
+2. **Update Product**: Click "Update" on product card
+3. **View Products**: All your products appear in the dashboard
+
+### Managing Shipments
+1. **Create Shipment**: Select product and enter details
+2. **Update Status**: Change status as shipment progresses
+3. **Cancel Shipment**: Cancel pending shipments when needed
+
+## Deployment
+
+### To IC Mainnet
+1. Build production version:
+```bash
+npm run build
+```
+
+2. Deploy canisters:
+```bash
+dfx deploy --network ic
+```
+
+**Cargochain** - Revolutionizing supply chain management with blockchain technology on the Internet Computer.
