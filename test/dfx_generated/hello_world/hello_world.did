@@ -1,0 +1,13 @@
+service: () -> {
+    addProduct: (text, text) -> (text);
+    addShipment: (text, text, text) -> (text);
+    cancelShipment: (text) -> (text);
+    getProductCount: () -> (int32) query;
+    getProductDetails: (text) -> (opt record {id:text; manufacturer:text; name:text; description:text; timestamp:nat64}) query;
+    getProducts: () -> (vec record {id:text; manufacturer:text; name:text; description:text; timestamp:nat64}) query;
+    getShipmentCount: () -> (int32) query;
+    getShipmentDetails: (text) -> (opt record {id:text; to:text; status:text; from:text; productId:text; timestamp:nat64}) query;
+    getShipments: () -> (vec record {id:text; to:text; status:text; from:text; productId:text; timestamp:nat64}) query;
+    updateProduct: (text, text, text) -> (text);
+    updateShipmentStatus: (text, text) -> (text);
+}

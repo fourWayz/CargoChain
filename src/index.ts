@@ -14,6 +14,7 @@ const Product = IDL.Record({
   name: IDL.Text,
   description: IDL.Text,
   manufacturer: IDL.Text,
+  owner: IDL.Text, // Added owner field
   timestamp: IDL.Nat64,
 });
 
@@ -24,24 +25,9 @@ const Shipment = IDL.Record({
   from: IDL.Text,
   to: IDL.Text,
   status: IDL.Text,
+  owner: IDL.Text, // Added owner field
   timestamp: IDL.Nat64,
 });
-
-// Define the Location structure using IDL
-const Location = IDL.Record({
-  name: IDL.Text,
-  latitude: IDL.Int32,
-  longitude: IDL.Int32,
-});
-
-// Define the Transaction structure using IDL
-const Transaction = IDL.Record({
-  id: IDL.Text,
-  shipmentId: IDL.Text,
-  location: Location,
-  timestamp: IDL.Nat64,
-});
-
 
 // Define the Message variant for responses
 const Message = IDL.Variant({
@@ -52,6 +38,7 @@ const Message = IDL.Variant({
   PaymentCompleted: IDL.Text,
   Success: IDL.Text,
   Fail: IDL.Text,
+  Unauthorized: IDL.Text,
 });
 
 // Define TypeScript types for the structures
@@ -60,6 +47,7 @@ type Product = {
   name: string;
   description: string;
   manufacturer: string;
+  owner: string;
   timestamp: bigint;
 };
 
@@ -69,16 +57,9 @@ type Shipment = {
   from: string;
   to: string;
   status: string;
+  owner: string;
   timestamp: bigint;
 };
-
-type Location = {
-  name: string;
-  latitude: number;
-  longitude: number;
-};
-
-
 
 type Message =
   | { Exists: string }
@@ -87,12 +68,13 @@ type Message =
   | { PaymentFailed: string }
   | { PaymentCompleted: string }
   | { Success: string }
-  | { Fail: string };
-
+  | { Fail: string }
+  | { Unauthorized: string };
 
 // Define arrays for storage
 let products: Product[] = [];
 let shipments: Shipment[] = [];
+
 export default class {
 
   /**
@@ -100,18 +82,22 @@ export default class {
    * @param {string} name - The name of the product.
    * @param {string} description - The description of the product.
    */
-  @update([IDL.Text, IDL.Text], IDL.Text)
-  addProduct(name: string, description: string): string {
+  @update([IDL.Text, IDL.Text], Message)
+  addProduct(name: string, description: string): Message {
     const productId: string = uuidv4();
+    const owner = msgCaller().toText();
+    
     const product: Product = {
       id: productId,
       name,
       description,
-      manufacturer: msgCaller().toText(),
+      manufacturer: owner,
+      owner,
       timestamp: time(),
     };
+    
     products.push(product);
-    return `Product added with ID ${productId}`;
+    return { Success: `Product added with ID ${productId}` };
   }
 
   /**
@@ -120,8 +106,19 @@ export default class {
    * @param {string} from - The origin of the shipment.
    * @param {string} to - The destination of the shipment.
    */
-  @update([IDL.Text, IDL.Text, IDL.Text], IDL.Text)
-  addShipment(productId: string, from: string, to: string): string {
+  @update([IDL.Text, IDL.Text, IDL.Text], Message)
+  addShipment(productId: string, from: string, to: string): Message {
+    const owner = msgCaller().toText();
+    const product = products.find(p => p.id === productId);
+    
+    if (!product) {
+      return { NotFound: `Product with ID ${productId} not found` };
+    }
+    
+    if (product.owner !== owner) {
+      return { Unauthorized: "You don't own this product" };
+    }
+    
     const shipmentId: string = uuidv4();
     const shipment: Shipment = {
       id: shipmentId,
@@ -129,10 +126,12 @@ export default class {
       from,
       to,
       status: "Pending",
+      owner,
       timestamp: time(),
     };
+    
     shipments.push(shipment);
-    return `Shipment added with ID ${shipmentId}`;
+    return { Success: `Shipment added with ID ${shipmentId}` };
   }
 
   /**
@@ -140,15 +139,21 @@ export default class {
    * @param {string} shipmentId - The ID of the shipment.
    * @param {string} status - The new status of the shipment.
    */
-  @update([IDL.Text, IDL.Text], IDL.Text)
-  updateShipmentStatus(shipmentId: string, status: string): string {
-    const shipment: Shipment | undefined = shipments.find((shipment) => shipment.id.toString() == shipmentId.toString());
+  @update([IDL.Text, IDL.Text], Message)
+  updateShipmentStatus(shipmentId: string, status: string): Message {
+    const owner = msgCaller().toText();
+    const shipment = shipments.find(s => s.id === shipmentId);
+    
     if (!shipment) {
-      return `Shipment with ID ${shipmentId} not found`;
+      return { NotFound: `Shipment with ID ${shipmentId} not found` };
     }
-
+    
+    if (shipment.owner !== owner) {
+      return { Unauthorized: "You don't own this shipment" };
+    }
+    
     shipment.status = status;
-    return `Shipment status updated for ID ${shipmentId}`;
+    return { Success: `Shipment status updated for ID ${shipmentId}` };
   }
 
   /**
@@ -156,21 +161,29 @@ export default class {
    * @param {string} productId - The ID of the product.
    */
   @query([IDL.Text], IDL.Opt(Product))
-  getProductDetails(productId: string): string | [Product] {
-    const product: Product | undefined = products.find((product) => product.id.toString() == productId.toString());
+  getProductDetails(productId: string): [Product] | string {
+    const owner = msgCaller().toText();
+    const product = products.find(p => p.id === productId);
+    
     if (!product) {
       return `Product with ID ${productId} not found`;
     }
-    return [product]
+    
+    if (product.owner !== owner) {
+      return `Unauthorized access to product ${productId}`;
+    }
+    
+    return [product];
   }
 
   /**
-   * Retrieves all products.
-   * @returns {Product[]} - A list of all products.
+   * Retrieves all products for the current user.
+   * @returns {Product[]} - A list of user's products.
    */
   @query([], IDL.Vec(Product))
   getProducts(): Product[] {
-    return products;
+    const owner = msgCaller().toText();
+    return products.filter(p => p.owner === owner);
   }
 
   /**
@@ -179,40 +192,48 @@ export default class {
    */
   @query([IDL.Text], IDL.Opt(Shipment))
   getShipmentDetails(shipmentId: string): [Shipment] | string {
-    const shipment: Shipment | undefined = shipments.find((shipment)=> shipment.id.toString() == shipmentId.toString());
+    const owner = msgCaller().toText();
+    const shipment = shipments.find(s => s.id === shipmentId);
+    
     if (!shipment) {
       return `Shipment with ID ${shipmentId} not found`;
     }
-    return [shipment]
+    
+    if (shipment.owner !== owner) {
+      return `Unauthorized access to shipment ${shipmentId}`;
+    }
+    
+    return [shipment];
   }
 
   /**
-   * Retrieves all shipments.
-   * @returns {Shipment[]} - A list of all shipments.
+   * Retrieves all shipments for the current user.
+   * @returns {Shipment[]} - A list of user's shipments.
    */
   @query([], IDL.Vec(Shipment))
   getShipments(): Shipment[] {
-    return shipments;
+    const owner = msgCaller().toText();
+    return shipments.filter(s => s.owner === owner);
   }
 
-
-
   /**
-   * Retrieves the count of products.
-   * @returns {number} - The number of products.
+   * Retrieves the count of products for the current user.
+   * @returns {number} - The number of user's products.
    */
   @query([], IDL.Int32)
   getProductCount(): number {
-    return Number(products.length.toString());
+    const owner = msgCaller().toText();
+    return products.filter(p => p.owner === owner).length;
   }
 
   /**
-   * Retrieves the count of shipments.
-   * @returns {number} - The number of shipments.
+   * Retrieves the count of shipments for the current user.
+   * @returns {number} - The number of user's shipments.
    */
   @query([], IDL.Int32)
   getShipmentCount(): number {
-    return Number(shipments.length.toString());
+    const owner = msgCaller().toText();
+    return shipments.filter(s => s.owner === owner).length;
   }
 
   /**
@@ -221,33 +242,46 @@ export default class {
    * @param {string} name - The new name of the product.
    * @param {string} description - The new description of the product.
    */
-  @update([IDL.Text, IDL.Text, IDL.Text], IDL.Text)
-  updateProduct(id: string, name: string, description: string): string {
-    const product: Product | undefined= products.find((product)=> product.id.toString() == id.toString());
+  @update([IDL.Text, IDL.Text, IDL.Text], Message)
+  updateProduct(id: string, name: string, description: string): Message {
+    const owner = msgCaller().toText();
+    const product = products.find(p => p.id === id);
+    
     if (!product) {
-      return  `Product with ID ${id} not found`;
+      return { NotFound: `Product with ID ${id} not found` };
     }
+    
+    if (product.owner !== owner) {
+      return { Unauthorized: "You don't own this product" };
+    }
+    
     product.name = name;
     product.description = description;
-    return `Product details updated for ID ${id}`;
+    return { Success: `Product details updated for ID ${id}` };
   }
 
   /**
    * Cancels a shipment.
    * @param {string} id - The ID of the shipment.
    */
-  @update([IDL.Text], IDL.Text)
-  cancelShipment(id: string): string {
-    const shipment: Shipment | undefined = shipments.find((shipment)=>shipment.id.toString() == id.toString());
+  @update([IDL.Text], Message)
+  cancelShipment(id: string): Message {
+    const owner = msgCaller().toText();
+    const shipment = shipments.find(s => s.id === id);
+    
     if (!shipment) {
-      return `Shipment with ID ${id} not found`;
+      return { NotFound: `Shipment with ID ${id} not found` };
     }
+    
+    if (shipment.owner !== owner) {
+      return { Unauthorized: "You don't own this shipment" };
+    }
+    
     if (shipment.status === "Pending" || shipment.status === "In Transit") {
-      shipments = shipments.filter((shipment)=> shipment.id.toString() !== id.toString());
-
-      return `Shipment with ID ${id} cancelled successfully`;
+      shipments = shipments.filter(s => s.id !== id);
+      return { Success: `Shipment with ID ${id} cancelled successfully` };
     } else {
-      return `Shipment with ID ${id} cannot be cancelled`;
+      return { Fail: `Shipment with ID ${id} cannot be cancelled` };
     }
   }
 }
