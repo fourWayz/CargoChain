@@ -121,7 +121,7 @@ export default function Home() {
         const actor = await getActor();
         const [name, manufacturer, description] = formValues;
         const result = await actor.addProduct(name, description);
-        Swal.fire('Success', result, 'success');
+        Swal.fire('Success', result.Success, 'success');
         await fetchData();
       } catch (error) {
         console.error(error);
@@ -155,7 +155,16 @@ export default function Home() {
         const actor = await getActor();
         const [productId, from, to] = formValues;
         const result = await actor.addShipment(productId, from, to);
-        Swal.fire('Success', result, 'success');
+        // Handle the Message type response
+        if ('Success' in result) {
+          Swal.fire('Success', result.Success, 'success');
+        } else if ('NotFound' in result) {
+          Swal.fire('Not Found', result.NotFound, 'error');
+        } else if ('Unauthorized' in result) {
+          Swal.fire('Unauthorized', result.Unauthorized, 'warning');
+        } else {
+          Swal.fire('Error', 'Unknown response from canister', 'error');
+        }
         await fetchData();
       } catch (error) {
         console.error(error);
@@ -185,7 +194,16 @@ export default function Home() {
         setLoading(true);
         const actor = await getActor();
         const result = await actor.updateShipmentStatus(shipmentId, status);
-        Swal.fire('Success', result, 'success');
+        // Handle the Message type response
+        if ('Success' in result) {
+          Swal.fire('Success', result.Success, 'success');
+        } else if ('NotFound' in result) {
+          Swal.fire('Not Found', result.NotFound, 'error');
+        } else if ('Unauthorized' in result) {
+          Swal.fire('Unauthorized', result.Unauthorized, 'warning');
+        } else {
+          Swal.fire('Error', 'Unknown response from canister', 'error');
+        }
         await fetchData();
       } catch (error) {
         console.error(error);
@@ -212,7 +230,17 @@ export default function Home() {
         setLoading(true);
         const actor = await getActor();
         const response = await actor.cancelShipment(shipmentId);
-        Swal.fire('Cancelled!', response, 'success');
+        // Handle the Message type response
+        if ('Success' in result) {
+          Swal.fire('Cancelled!', response, 'success');
+        } else if ('NotFound' in result) {
+          Swal.fire('Not Found', result.NotFound, 'error');
+        } else if ('Unauthorized' in result) {
+          Swal.fire('Unauthorized', result.Unauthorized, 'warning');
+        } else {
+          Swal.fire('Error', 'Unknown response from canister', 'error');
+        }
+
         await fetchData();
       } catch (error) {
         console.error(error);
@@ -244,7 +272,16 @@ export default function Home() {
         const actor = await getActor();
         const [name, description] = formValues;
         const result = await actor.updateProduct(productId, name, description);
-        Swal.fire('Success', result, 'success');
+        // Handle the Message type response
+        if ('Success' in result) {
+          Swal.fire('Success', result.Success, 'success');
+        } else if ('NotFound' in result) {
+          Swal.fire('Not Found', result.NotFound, 'error');
+        } else if ('Unauthorized' in result) {
+          Swal.fire('Unauthorized', result.Unauthorized, 'warning');
+        } else {
+          Swal.fire('Error', 'Unknown response from canister', 'error');
+        }
         await fetchData();
       } catch (error) {
         console.error(error);
@@ -385,8 +422,8 @@ export default function Home() {
                                 <td>{shipment.to}</td>
                                 <td>
                                   <span className={`badge bg-${shipment.status === 'DELIVERED' ? 'success' :
-                                      shipment.status === 'CANCELLED' ? 'danger' :
-                                        shipment.status === 'IN_TRANSIT' ? 'warning' : 'info'
+                                    shipment.status === 'CANCELLED' ? 'danger' :
+                                      shipment.status === 'IN_TRANSIT' ? 'warning' : 'info'
                                     }`}>
                                     {shipment.status}
                                   </span>
